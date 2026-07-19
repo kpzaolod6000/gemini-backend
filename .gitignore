@@ -1,0 +1,13 @@
+# Dependencias — se regeneran con npm install
+node_modules/
+
+# Secretos — NUNCA a git. .env.example sí se commitea
+.env
+.env.local
+.env.*.local
+
+# Output de compilación TypeScript
+dist/
+
+# Logs
+*.log
