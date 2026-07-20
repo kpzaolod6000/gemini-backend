@@ -71,4 +71,41 @@ router.post('/multi', async (req, res) => {
     res.json({ conversationId: id, message: response.text });
 });
 
+router.post('/stream', async (req, res) => {
+    const { prompt } = req.body;
+    if (!prompt || typeof prompt !== 'string') {
+        res.status(400).json({ error: 'prompt requerido (string no vacío)' });
+        return;
+    }
+
+    const chat = ai.chats.create({ model: DEFAULT_MODEL });
+    const stream = await chat.sendMessageStream({ message: prompt });
+
+    // Header SSE(Server-Sent Events) lo que permite esto es que el cliente pueda recibir datos en tiempo real
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+
+    let usage;
+    try {
+        for await (const chunk of stream) {
+            if (chunk.text) {
+                res.write(`event: text-delta\ndata: ${JSON.stringify({ text: chunk.text })}\n\n`);
+            }
+            if (chunk.usageMetadata) {
+                usage = chunk.usageMetadata;
+            }
+        }
+
+        res.write(`event: stream-end\ndata: ${JSON.stringify({ usage })}\n\n`);
+    } catch (err) {
+        // Headers ya enviados: el error viaja como evento SSE, no como status HTTP
+        res.write(`event: stream-error\ndata: ${JSON.stringify({
+            error: err instanceof Error ? err.message : 'error en el stream',
+        })}\n\n`);
+    } finally {
+        res.end();
+    }
+})
+
 export default router;
