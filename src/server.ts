@@ -16,7 +16,7 @@ const io = new Server(httpServer, {
 
 io.on('connection', (socket) => {
     console.log('cliente conectado:', socket.id);
-    registerChatHandlers(socket);
+    registerChatHandlers(io, socket);
 });
 
 const PORT = process.env.PORT || 4000;

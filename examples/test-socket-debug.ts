@@ -4,7 +4,8 @@ const socket = io('http://localhost:4000', { timeout: 5000 });
 
 socket.on('connect', () => {
     console.log('conectado:', socket.id);
-    socket.emit('chat:stream', { prompt: 'explica qué es un socket en 4 frases' });
+    socket.emit('chat:join', { conversationId: 'test-room' });
+    socket.emit('chat:stream', { prompt: 'di ok breve', conversationId: 'test-room' });
 });
 
 socket.on('chat:typing', (data) => {
