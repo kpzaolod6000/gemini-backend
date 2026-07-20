@@ -6,7 +6,7 @@ export interface IMessage {
   content: string;
   model: string;
   timestamp: Date;
-  metadata?: Record<string, unknown>;
+  metadata?: unknown;
 }
 
 const messageSchema = new Schema<IMessage>({

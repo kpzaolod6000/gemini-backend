@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { ai, DEFAULT_MODEL } from '../lib/gemini';
 import type { Chat } from '@google/genai';
+import { Conversation } from '../models/Conversation';
+import { Message } from '../models/Message';
 
 const router = Router();
 const chats = new Map<string, Chat>()
@@ -44,12 +46,28 @@ router.post('/multi', async (req, res) => {
             return
         }
     } else {
-        id = crypto.randomUUID();
+        const conversation = await Conversation.create({
+            userId: 'demo',
+            title: prompt.slice(0, 50),
+            model: DEFAULT_MODEL,
+        });
+        id = conversation._id.toString();
         chat = ai.chats.create({ model: DEFAULT_MODEL });
-        chats.set(id, chat);
+        chats.set(id, chat)
     }
 
     const response = await chat.sendMessage({ message: prompt });
+    const text = response.text ?? '';
+    await Message.create([
+        { conversationId: id, role: 'user', content: prompt, model: DEFAULT_MODEL },
+        {
+            conversationId: id,
+            role: 'model',
+            content: text,
+            model: DEFAULT_MODEL,
+            metadata: response.usageMetadata,
+        },
+    ]);
     res.json({ conversationId: id, message: response.text });
 });
 
